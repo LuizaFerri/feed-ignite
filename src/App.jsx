@@ -13,7 +13,7 @@ function App() {
       <div className={styles.wrapper}>
           <Sidebar />
         <main>
-          <strong>post</strong>
+          
         </main>
      </div>
     </div>
