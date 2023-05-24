@@ -1,46 +1,108 @@
+import { useState } from "react";
+
+import { format, formatDistanceToNow, set } from "date-fns";
+import ptBR from "date-fns/locale/pt-BR";
 import { Avatar } from "./Avatar";
 import { Comment } from "./Comment";
 import styles from "./Post.module.css";
 
-export function Post() {
+export function Post({ author, content, publishedAt }) {
+  const [comments, setComment] = useState(["post muito bacana, parabéns!"]);
+
+  const [newCommentText, setNewCommentText] = useState("");
+
+  const publishedDateFormatted = format(
+    publishedAt,
+    "d 'de' LLLL 'às' HH:mm'h'",
+    {
+      locale: ptBR,
+    }
+  );
+
+  const publishedDateRelativeToNow = formatDistanceToNow(publishedAt, {
+    locale: ptBR,
+    addSuffix: true,
+  });
+
+  const handleCreateNewComment = (event) => {
+    event.preventDefault();
+    setComment([...comments, newCommentText]);
+    setNewCommentText("");
+  };
+
+  const handleNewCommentChange = () => {
+    event.target.setCustomValidity("");
+    setNewCommentText(event.target.value);
+  };
+
+  const handlwNewCommentInvalid = () => {
+    event.target.setCustomValidity("Esse campo é obrigatório");
+  };
+
+  const deleteComment = (comment) => {
+    const commentsWithoutDeletedOne = comments.filter((c) => c !== comment);
+    setComment(commentsWithoutDeletedOne);
+  };
+
+  const isNewCommentTextEmpty = newCommentText.length === 0;
+
   return (
     <article className={styles.post}>
       <header>
         <div className={styles.author}>
-          <Avatar src="https://avatars.githubusercontent.com/u/45185814?v=4" />
+          <Avatar src={author.avatarUrl} />
           <div className={styles.authorInfo}>
-            <strong>Luiza Ferri</strong>
-            <span>Web developer</span>
+            <strong>{author.name}</strong>
+            <span>{author.role}</span>
           </div>
         </div>
-        <time title="11 de maio às 08:13h" dateTime="2022-05-11 08:13:30">
-          {" "}
-          Publicado há 1h
+        <time
+          title={publishedDateFormatted}
+          dateTime={publishedAt.toISOString()}
+        >
+          {publishedDateRelativeToNow}
         </time>
       </header>
       <div className={styles.content}>
-        <p>
-          {" "}
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam
-        </p>
-        <p> voluptatum, quod, quia, quae voluptates quas voluptatibus</p>
-        <p> necessitatibus voluptatem quibusdam quidem natus. Quisquam</p>
-        <p> voluptatum, quod, quia, quae voluptates quas voluptatibus</p>
-        <p> necessitatibus voluptatem quibusdam quidem natus.</p>
-        <a href="#">Ver mais</a>
-        <a href="#">#seguirNasRedes</a>
+        {content.map((line) => {
+          if (line.type === "paragraph") {
+            return <p key={line.content}>{line.content}</p>;
+          } else if (line.type === "link") {
+            return (
+              <p key={line.content}>
+                {" "}
+                <a href="#">{line.content}</a>
+              </p>
+            );
+          }
+        })}
       </div>
-      <form className={styles.commentForm}>
+      <form className={styles.commentForm} onSubmit={handleCreateNewComment}>
         <strong>Deixe seu feedback</strong>
-        <textarea placeholder="Deixe um comentário" />
+        <textarea
+          value={newCommentText}
+          name="comment"
+          placeholder="Deixe um comentário"
+          onChange={handleNewCommentChange}
+          required
+          onInvalid={handlwNewCommentInvalid}
+        />
         <footer>
-          <button type="submit">Publicar</button>
+          <button type="submit" disabled={isNewCommentTextEmpty}>
+            Publicar
+          </button>
         </footer>
       </form>
       <div className={styles.commentList}>
-        <Comment />
-        <Comment />
-        <Comment />
+        {comments.map((comment) => {
+          return (
+            <Comment
+              key={comment}
+              content={comment}
+              onDeleteComment={deleteComment}
+            />
+          );
+        })}
       </div>
     </article>
   );
